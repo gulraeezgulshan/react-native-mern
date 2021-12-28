@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 router.get(`/`, async (req, res) =>{
-    const userList = await User.find().select('');
+    const userList = await User.find().select('-passwordHash');
 
     if(!userList) {
         res.status(500).json({success: false})
@@ -26,7 +26,7 @@ router.post('/', async (req,res)=>{
     let user = new User({
         name: req.body.name,
         email: req.body.email,
-        passwordHash: bcrypt.hashSync(req.body.password,10),
+        passwordHash: bcrypt.hashSync(req.body.password, 10),
         phone: req.body.phone,
         isAdmin: req.body.isAdmin,
         street: req.body.street,
@@ -78,15 +78,12 @@ router.put('/:id',async (req, res)=> {
 
 router.post('/login', async (req,res) => {
     const user = await User.findOne({email: req.body.email})
-
     const secret = process.env.secret;
     if(!user) {
         return res.status(400).send('The user not found');
     }
 
     if(user && bcrypt.compareSync(req.body.password, user.passwordHash)) {
-
-        //JSON WEB TOKEN (JWT)
         const token = jwt.sign(
             {
                 userId: user.id,
